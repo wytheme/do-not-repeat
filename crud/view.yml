@@ -1,0 +1,7 @@
+modelName: User
+modelExtension: jsx
+
+table:
+  title: "账号列表"
+  th: ["编号", "名称", "权限分组", "创建时间", "更多操作"]
+
