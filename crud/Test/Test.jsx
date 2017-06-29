@@ -9,17 +9,17 @@ import utils from "app/utils"
 import api from 'app/utils/api'
 import Access, {hasAccess} from 'app/pages/user/Access'
 // 页面交互相关
-import <%=modelName%>EditModal from './<%=modelName%>EditModal.jsx'
-import m from './<%=modelName.toLowerCase()%>.js'
+import TestEditModal from './TestEditModal.jsx'
+import m from './test.js'
 
-export class <%=modelName%> extends React.Component {
+export class Test extends React.Component {
     constructor(props){
         super(props);
         this.options = {unMount: false};
         this.state = {
             table_info: {
-                cn_title: "<%=table.title%>",
-                data_th: <%- JSON.stringify(table.th) %>,
+                cn_title: "账号列表",
+                data_th: ["编号","名称","权限分组","创建时间","更多操作"],
             },
             data:[],
             table_data: [],
@@ -65,7 +65,7 @@ export class <%=modelName%> extends React.Component {
         }
         this.setState(st)
     }
-    <% if (feature.isCluster) { %>
+    
     onClusterChange (cluster) {
         this.setState({cluster: cluster}, () => {
             if(cluster) {
@@ -87,21 +87,21 @@ export class <%=modelName%> extends React.Component {
         }
         return true
     }
-    <% } %>
+    
 
     // ---------------crud------------
     create() {
-        <% if (feature.isCluster) { %>
+        
         if(!this.checkCluster()) return
-        <% } %>
+        
 
         this.showModal()
     }
 
     update(id) {
-        <% if (feature.isCluster) { %>
+        
         if(!this.checkCluster()) return
-        <% } %>
+        
         let one = this.state.data.filter((v) => v.Id == id)
         if(one.length == 0 ) {
             return
@@ -111,9 +111,9 @@ export class <%=modelName%> extends React.Component {
     }
 
     del(id) {
-        <% if (feature.isCluster) { %>
+        
         if(!this.checkCluster()) return
-        <% } %>
+        
         // TODO
         return m.del(this.state.cluster, id)
             .then(this.retrieveAll)
@@ -286,6 +286,6 @@ const mapDispatchToProps = (dispatch) => {
     return {}
 }
 
-const Connected<%=modelName%> = connect(mapStateToProps, mapDispatchToProps)(<%=modelName%>)
+const ConnectedTest = connect(mapStateToProps, mapDispatchToProps)(Test)
 
-export default Connected<%=modelName%>
+export default ConnectedTest

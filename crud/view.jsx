@@ -30,8 +30,16 @@ let EVAUser = React.createClass({
             modalConfirm: this.hideModal,
             modalCreateAppShow: false,
             editorMode: 0,
-            editorData: null
+            editorData: null,
+            cluster: null,
         }
+
+        this.showModal = this.showModal.bind(this)
+        this.hideModal = this.hideModal.bind(this)
+        this.create = this.create.bind(this)
+        this.retrieveAll = this.retrieveAll.bind(this)
+        this.update = this.update.bind(this)
+        this.del = this.del.bind(this)
 
     },
 

@@ -1,7 +1,27 @@
-modelName: User
+parentName: Test
+modelName: Test
 modelExtension: jsx
+
+feature:
+  isCluster: "true"
 
 table:
   title: "账号列表"
   th: ["编号", "名称", "权限分组", "创建时间", "更多操作"]
+  fields: ["Id", "Name", "AccessType", "CreateTime", ""]
+
+data:
+  AccessType
+
+crud:
+  retrieveAll:
+    url: "/config/errordate/all"
+  create:
+    button: 创建账户
+    url: "/v1/user/all"
+    #class: ["btn-default"]
+  update:
+    url: "/config/errordate/"
+  del:
+    url: "/config/errordate/"
 
