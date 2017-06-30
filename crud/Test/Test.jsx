@@ -3,14 +3,15 @@ import {connect} from 'react-redux'
 import {Modal} from 'react-bootstrap'
 import Loading from 'components/utils/Loading.jsx'
 import Datatable from 'components/tables/Datatable.jsx'
+import ClusterSelect from "app/pages/utils/ClusterSelect"
 import WidgetGrid from 'components/layout/widgets/WidgetGrid.jsx'
 import JarvisWidget from 'components/layout/widgets/JarvisWidget.jsx'
 import utils from "app/utils"
 import api from 'app/utils/api'
 import Access, {hasAccess} from 'app/pages/user/Access'
-// 页面交互相关
+// ------------ custom ------------
 import TestEditModal from './TestEditModal.jsx'
-import m from './test.js'
+import m from './Test.model.js'
 
 export class Test extends React.Component {
     constructor(props){
@@ -18,8 +19,8 @@ export class Test extends React.Component {
         this.options = {unMount: false};
         this.state = {
             table_info: {
-                cn_title: "账号列表",
-                data_th: ["编号","名称","权限分组","创建时间","更多操作"],
+                cn_title: "异常列表",
+                data_th: ["编号","异常时间","更多操作"],
             },
             data:[],
             table_data: [],
@@ -50,7 +51,7 @@ export class Test extends React.Component {
             modalCreateAppShow: false
         });
         if (refresh) {
-            this.refreshData();
+            this.retrieveAll();
         }
     }
 
@@ -76,13 +77,15 @@ export class Test extends React.Component {
         })
     }
 
-    checkCluster() {
+    checkCluster(withMessage) {
         if (!this.state.cluster) {
-            $.SmartMessageBox({
-                title: "请先选择集群信息。",
-                content: '',
-                buttons: '[确认]'
-            });
+            if(withMessage) {
+                $.SmartMessageBox({
+                    title: "请先选择集群信息。",
+                    content: '',
+                    buttons: '[确认]'
+                });
+            }
             return false
         }
         return true
@@ -91,41 +94,40 @@ export class Test extends React.Component {
 
     // ---------------crud------------
     create() {
-        
         if(!this.checkCluster()) return
-        
 
         this.showModal()
     }
 
     update(id) {
-        
         if(!this.checkCluster()) return
-        
         let one = this.state.data.filter((v) => v.Id == id)
         if(one.length == 0 ) {
             return
         }
-        one = one[0]
-        this.showModal(one)
+        this.showModal(one[0])
     }
 
     del(id) {
-        
         if(!this.checkCluster()) return
-        
-        // TODO
         return m.del(this.state.cluster, id)
             .then(this.retrieveAll)
     }
 
     retrieveAll () {
+        if(!this.checkCluster(false)) return
+        
         this.setState({table_data: [], loadingStatus: true});
-        return m.getAll()
+        return m.getAll(this.state.cluster)
             .then((respData) => {
+                // console.log(respData)
+                let rtn = respData
+                if (rtn.status != 200) {
+                    return Promise.reject(rtn.msg)
+                }
                 this.setState({
-                    data: respData.data,
-                    table_data: respData.data,
+                    data: rtn.data || [],
+                    table_data: rtn.data || [],
                     loadingStatus: false
                 });
             })
@@ -142,61 +144,72 @@ export class Test extends React.Component {
     }
 
     componentWillUnmount() {
-        // api.abort();
     }
 
     componentWillReceiveProps(nextProps) {
     }
 
-    render() {
-        let {hasAccess, user} = this.props
-        let list = [], body = this.state.modalBody;
+    renderCluster() {
+        return (
+            <section id="widget-grid">
+                <div className="well clearfix">
+                    <div className="col-sm-3 col-md-3">
+                        <ClusterSelect className="form-control select  col" cluster_type="bigdata"
+                                        onChange={(e) => {
+                                            this.onClusterChange(e.target.value)
+                                        }}/>
+                    </div>
+                </div>
+            </section>
+        )
+    }
 
-        let table_dataSet = [];
-        let name = ''
-        let status = '上线运行中'
-        let actions = '';
-        let table = '';
+    renderTableHeader() {
+        return (
+            <header><span className="widget-icon"> <i className="fa fa-table"/> </span>
+                <h2>{this.state.table_info.cn_title}</h2>
+                <div className="widget-toolbar">
+                        <a href-void
+                            className="btn btn-danger btn-lg"
+                            onClick={this.create} style={{fontSize: '12px'}}>
+                            <i className="fa fa-plus"/>
+                            创建账户
+                        </a>
+                </div>
+            </header>
+        )
+    }
+
+    renderTableData() {
         let count = this.state.table_data.length
-        if (count > 0) {
-            $.each(this.state.table_data, function (k, v) {
+        let table_dataSet = [];
+        if(count == 0) return null
 
-                let accessType = '';
+        $.each(this.state.table_data, function (k, v) {
 
-                switch (v.AccessType) {
-                    case 1:
-                        accessType = '超级管理员';
-                        actions = '';
-                        break;
-                    case 2:
-                        accessType = '管理员';
-                        break;
-                    case 4:
-                        accessType = "销售人员";
-                        break;
-                    default:
-                        accessType = '用户';
-                        break;
-                }
-                actions = ``;
-                if (v.AccessType > user.AccessType) {
-                    hasAccess("EVA_USER_PUT") && (actions += `<a href="javascript:void(0)" class="btn btn-default ml_10 edit" data-name=${v.Id}>编辑</a>`)
-                    hasAccess("EVA_USER_DELETE") && (actions += `<a href="javascript:void(0)" class="btn btn-danger ml_10 del" data-name=${v.Id}>删除</a>`)
-                    table_dataSet.push([v.Id, v.Name, accessType, v.CreateTime, actions])
-                }else if(utils.getCookie("cuserName") === v.Name){
-                    hasAccess("EVA_USER_PUT") && (actions += `<a href="javascript:void(0)" class="btn btn-default ml_10 edit" data-name=${v.Id}>编辑</a>`)
-                    table_dataSet.push([v.Id, v.Name, accessType, v.CreateTime, actions])
-                }
-            });
-            table = <Datatable
+            let actions = ``;
+            actions += `<a href="javascript:void(0)" class="btn btn-default ml_10 edit" data-name=${v.Id}>编辑</a>`
+            actions += `<a href="javascript:void(0)" class="btn btn-danger ml_10 del" data-name=${v.Id}>删除</a>`
+            table_dataSet.push([
+                v['Id'],
+                v['ErrorDate'],
+                actions
+            ])
+        });
+
+        return table_dataSet
+    }
+
+    renderTable(data) {
+        if(!data) return null;
+        return (
+            <Datatable
                 options={{
-                    data: table_dataSet,
+                    data: data,
                     columns: [
                         {title: this.state.table_info.data_th[0]},
                         {title: this.state.table_info.data_th[1]},
                         {title: this.state.table_info.data_th[2]},
-                        {title: this.state.table_info.data_th[3]},
-                        {title: this.state.table_info.data_th[4]},
                     ]
                 }}
                 paginationLength={true}
@@ -204,69 +217,60 @@ export class Test extends React.Component {
                 width="100%"
                 funcs={
                     [
-                        ["a.edit", this.edit], //编辑
-                        ["a.del", this.del], //删除
+                        ["a.edit", this.update], 
+                        ["a.del", this.del],                     
                     ]
-
                 }>
             </Datatable>
-        }
-        list.push(
-            <WidgetGrid key="0">
-                <div className="row">
-                    <article className="col-sm-12">
-                        <JarvisWidget editbutton={false} fullscreenbutton={false} colorbutton={false}
-                                      togglebutton={false}
-                                      deletebutton={false}>
-                            <header><span className="widget-icon"> <i className="fa fa-table"/> </span>
-                                <h2>{this.state.table_info.cn_title}</h2>
-                                <div className="widget-toolbar">
-                                    <Access id="EVA_USER_POST">
-                                        <a href-void
-                                           className="btn btn-danger btn-lg"
-                                           onClick={this.createApp} style={{fontSize: '12px'}}>
-                                            <i className="fa fa-plus"/>
-                                            创建账户
-                                        </a>
-                                    </Access>
-                                </div>
-                            </header>
-                            <div>
-                                <div className="widget-body no-padding">
-                                    <Access id="EVA_USER_GET">
-                                        {table}
-                                    </Access>
-                                </div>
-                            </div>
-                        </JarvisWidget>
-                    </article>
-                </div>
-            </WidgetGrid>
         )
-        // }
+    }
+
+    render() {
+        let {hasAccess, user} = this.props
+        let {modalBody, modalTitle, loadingStatus, modalShow} = this.state
+        let content = this.renderTable(this.renderTableData())
+        let header = this.renderTableHeader()
+        let cluster = this.renderCluster()
 
         if (this.state.modalCreateAppShow) {
-            body = <EVAEditModal
+            modalBody = <TestEditModal
                 mode={this.state.editorMode}
                 data={this.state.editorData}
+                cluster={this.state.cluster}
                 close={this.hideModal}
             />;
         }
 
         return (
             <div id="content">
-                <Loading show={this.state.loadingStatus}/>
-                {list}
-                <Modal show={this.state.modalShow}
+                <Loading show={loadingStatus}/>
+                {cluster}
+                <WidgetGrid>
+                    <div className="row">
+                        <article className="col-sm-12">
+                            <JarvisWidget editbutton={false} fullscreenbutton={false} colorbutton={false}
+                                        togglebutton={false}
+                                        deletebutton={false}>
+                                {header}
+                                <div>
+                                    <div className="widget-body no-padding">
+                                        {content}
+                                    </div>
+                                </div>
+                            </JarvisWidget>
+                        </article>
+                    </div>
+                </WidgetGrid>
+                <Modal show={modalShow}
                        key='1'>
                     <Modal.Header
                         closeButton={true}
                         aria-label={'Close'}
                         onHide={this.hideModal}>
-                        <h4 className="modal-title">{this.state.modalTitle}</h4>
+                        <h4 className="modal-title">{modalTitle}</h4>
                     </Modal.Header>
                     <Modal.Body>
-                        {body}
+                        {modalBody}
                     </Modal.Body>
                 </Modal>
             </div>

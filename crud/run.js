@@ -34,9 +34,23 @@ var logger = new (winston.Logger)({
 logger.info('argv', argv)
 // -------------------全局变量-----------------
 const url = {
-	tpl: path.resolve(__dirname, './view.ejs'),
-	config: path.resolve(__dirname, './view.yml'),
-	output: path.resolve(__dirname, './view.jsx'),
+	config: path.resolve(__dirname, './run.yml'),
+  output: [
+    {
+      tpl: path.resolve(__dirname, './View.ejs'),
+      ext: '.jsx'
+    },
+    {
+      tpl: path.resolve(__dirname, './View.model.ejs'),
+      ext: '.model.js'
+    },
+    {
+      tpl: path.resolve(__dirname, './ViewEditModal.ejs'),
+      ext: 'EditModal.jsx'
+    }
+  ],
+  // todo
+  targetPath: ''
 }
 
 // -------------------读取本地配置-----------------
@@ -49,26 +63,38 @@ try {
   logger.error(e);
 }
 
+// console.log(conf.table.editFields)
+
+url.targetPath = conf.targetPath
+
 // 1. 创建模块目录
 shelljs.mkdir(path.resolve(__dirname, conf.parentName))
 
-// 1. 获取文件输出路径
-url.output = path.resolve(__dirname, conf.modelName + '/' +conf.modelName+'.'+conf.modelExtension)
-
 // -------------------解析模板并输出文件-----------------
-var people = ['geddy', 'neil', 'alex']
-var html = ejs.renderFile(url.tpl, conf, {}, function(err, str) {
-	logger.error(err)
 
-	fs.writeFile(url.output, str, (err) => {
-	  if (err) throw err;
-	  logger.info('The file has been saved!');
+function renderAndOutput(tpl, output, targetPath) {
+  targetPath = !targetPath && (targetPath = url.targetPath)
+  let html = ejs.renderFile(tpl, conf, {}, function(err, str) {
+    logger.error(err)
 
-	  //shelljs.cp(url.output, '/Users/lwz/Documents/htdocs/easemob/eva/src/app/pages/test')
-	});
+    fs.writeFile(output, str, (err) => {
+      if (err) throw err;
+      logger.info('--------------- saved! ----------------');
+      logger.info(`tpl   : ${tpl}`)
+      logger.info(`output: ${output}`)
+      logger.info(`copy to`)
+
+      targetPath && shelljs.cp(output, targetPath)
+      targetPath && logger.info(`targetPath: ${targetPath}`)
+    });
+  })
+}
+
+
+url.output.forEach(function(o) {
+  let output = path.resolve(__dirname, conf.parentName + '/' +conf.modelName+o.ext)
+  renderAndOutput(o.tpl, output)
 })
-
-
 
 
 

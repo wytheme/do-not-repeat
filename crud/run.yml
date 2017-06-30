@@ -1,0 +1,47 @@
+# --------基础配置-------
+# 编译后文件复制的目标地址
+targetPath: ~/src/app/pages/test
+# 父级模块名称
+parentName: Test
+# 当前模块名称
+modelName: Test
+
+# --------功能相关-------
+feature:
+  # 是否需要引入集群模块
+  isCluster: true
+
+# --------table相关-------
+table:
+  # 表名
+  title: 异常列表
+  # 表头
+  th: ["编号", "异常时间", "更多操作"]
+  # 关联域（需要和表头对应）
+  fields: ["Id", "ErrorDate", ""]
+  # 编辑的时候不需要编辑的字段
+  editFields: 
+    - 
+      field: ErrorDate
+      label: 异常日期
+      placeholder: 20170606
+      validators:
+        notEmpty: 异常日期不能为空
+
+# --------增删改查-------
+crud:
+  # 基础地址（url根据rest api定义）
+  url: /config/
+  # 查
+  retrieveAll:
+  # 增
+  create:
+    button: 创建账户
+    #class: ["btn-default"]
+  # 改
+  update:
+    button: 编辑
+  # 删
+  del:
+    button: 删除
+

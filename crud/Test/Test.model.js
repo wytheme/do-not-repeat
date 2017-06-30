@@ -1,0 +1,45 @@
+import {makeBigdataHeaders, restApi} from "app/utils/api"
+// -----------custom------------
+let baseUrl = '/config/'
+let api = restApi
+
+export function getAll(cluster) {
+    // cluster = 'localhost:20170'
+    let headers = makeBigdataHeaders()
+    return api.get(`/${cluster}${baseUrl}`, '', {
+        headers: headers
+    });
+}
+
+export function del(cluster, id) {
+    // cluster = 'localhost:20170'
+    let headers = makeBigdataHeaders()
+    return api.delete(`/${cluster}${baseUrl}${id}`, '', {
+        headers: headers
+    });
+}
+
+export function update(cluster, id, data) {
+    // cluster = 'localhost:20170'
+    let headers = makeBigdataHeaders()
+    headers["Content-Type"] = 'application/json'
+    return api.put(`/${cluster}${baseUrl}${id}`, JSON.stringify(data), {
+        headers: headers
+    });
+}
+
+export function create(cluster, data) {
+    // cluster = 'localhost:20170'
+    let headers = makeBigdataHeaders()
+    headers["Content-Type"] = 'application/json'
+    return api.post(`/${cluster}${baseUrl}`, JSON.stringify(data), {
+        headers: headers
+    });
+}
+
+export default {
+    getAll,
+    del,
+    update,
+    create
+}

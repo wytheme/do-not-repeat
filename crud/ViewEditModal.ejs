@@ -1,0 +1,165 @@
+import React from 'react'
+import {connect} from 'react-redux'
+import BootstrapValidator from 'components/forms/validation/BootstrapValidator.jsx'
+import api from 'app/utils/api'
+import bigdata from 'app/utils/bigdata'
+import utils from "app/utils"
+import _ from "lodash"
+import m from './<%=modelName%>.model.js'
+
+
+let <%=modelName%>EditModal = React.createClass({
+
+    getInitialState: function () {
+        return {
+            regMod: '',
+            confirm: false,
+            validatorOptions: {
+                feedbackIcons: {
+                    valid: 'glyphicon glyphicon-ok',
+                    invalid: 'glyphicon glyphicon-remove',
+                    validating: 'glyphicon glyphicon-refresh'
+                },
+                fields: {
+                    <%_ 
+                    table.editFields.forEach(v => {
+                        let field = v.field
+                        let validators = v.validators
+                    _%>
+                    <%=field%>: {
+                        validators: {
+                            <%_ 
+                            for(validate in validators) { 
+                            _%>
+                            <%=validate%>: {
+                                message: "<%=validators[validate]%>"
+                            },
+                            <%_ } _%>
+                        }
+                    },
+                    <%_ }) _%>
+                }
+            }
+        }
+    },
+
+    _onSubmit: function (e) {
+        let confirm = this.state.confirm
+        let dataBody = {}
+        if (!confirm) return
+        
+        <%_ 
+        table.editFields.forEach(v => {    
+            let field = v.field
+            let validators = v.validators
+        _%>
+        let p<%=field%> = this.refs["<%=field%>"].value
+            <%_ if ( validators.hasOwnProperty('notEmpty') ) { _%>
+        if (!p<%=field%>) return 
+        dataBody["<%=field%>"] = p<%=field%>
+            <%_ } _%>
+        <%_ }) _%>
+
+
+        if (this.props.mode > 0) {
+            let id = this.props.data.Id
+            return m.update(<%_ if (feature.isCluster) { _%> this.props.cluster, <%_ } _%> id, dataBody)
+                .then(() => this.props.close(true))
+                .catch(() => this.props.close(false))
+        } else {
+            return m.create(<%_ if (feature.isCluster) { _%> this.props.cluster, <%_ } _%>dataBody)
+                .then(() => this.props.close(true))
+                .catch(() => this.props.close(false))
+        }
+        
+    },
+
+    componentWillUnmount: function () {
+        if (this.serverRequest)
+            this.serverRequest.abort();
+    },
+
+    render: function () {
+        let data = this.props.data || {}
+        let {
+            <%_ 
+            table.editFields.forEach(v => {    
+                let field = v.field
+            _%> 
+            <%=field%>,
+            <%_ }) _%>
+        } = data
+
+        // if (this.props.data && this.props.mode > 0) {
+        //     date = this.props.data.date
+        // }
+
+        return (
+            <BootstrapValidator options={this.state.validatorOptions}>
+
+                <form id="productForm" onSubmit={this._onSubmit} className="form-horizontal" action=""
+                      target="nm_iframe">
+                    <iframe id="id_iframe" name="nm_iframe" className="hide"></iframe>
+
+                    <%_ 
+                    table.editFields.forEach(v => {    
+                        let field = v.field
+                        let label = v.label
+                        let placeholder = v.placeholder
+                    _%> 
+                    <fieldset>
+                        <div className="form-group">
+                            <label className="col-xs-2 col-lg-3 control-label"><%=label%></label>
+                            <div className="col-xs-9 col-lg-6 inputGroupContainer">
+                                <div className="input-group">
+                                    <input type="text"
+                                           className="form-control"
+                                           name="<%=field%>"
+                                           placeholder="<%=placeholder%>"
+                                           defaultValue={<%=field%>}
+                                           ref='<%=field%>'/>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <%_ }) _%>
+
+                    <div className="form-actions backgroud-color-white">
+                        <div className="row">
+                            <div className="col-md-12">
+                                <button className="btn btn-default" onClick={(e) => {
+                                    this.setState({confirm: false});
+                                    this.props.close();
+                                }}>
+                                    取消
+                                </button>
+                                <button className="btn btn-primary margin-left"
+                                        onClick={(e) => {
+                                            this._onSubmit()
+                                            this.setState({confirm: true});
+                                        }}>
+                                    {this.props.mode ? "更新" : "创建"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </ BootstrapValidator >
+        )
+    }
+});
+
+const mapStateToProps = (state) => {
+    return {
+        I18N: state.i18n.locale
+        &&
+        state.i18n.translations
+        &&
+        state.i18n.translations[state.i18n.locale] || {},
+        user: state.login.user
+    }
+}
+
+const Connected<%=modelName%>EditModal = connect(mapStateToProps)(<%=modelName%>EditModal)
+
+export default Connected<%=modelName%>EditModal

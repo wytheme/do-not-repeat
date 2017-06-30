@@ -19,7 +19,7 @@ gulp.task('default', function(cb) {
 })
 
 function sh() {
-	if (shell.exec('node crud/view.js').code !== 0) {
+	if (shell.exec('node crud/run.js').code !== 0) {
 	  shell.echo('Error: Git commit failed');
 	  // shell.exit(1);
 	}
