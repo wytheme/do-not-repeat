@@ -37,10 +37,10 @@ mkdir: path already exists: ~/crud/Test
 
 工具集合
 
-- js-yaml 配置文件
-- ejs 解析模板
-- shelljs 执行shell脚本
-- gulp 监听
+- [js-yaml](https://github.com/nodeca/js-yaml) 配置文件
+- [ejs](https://github.com/mde/ejs) 解析模板
+- [shelljs](https://github.com/shelljs/shelljs) 执行shell脚本
+- [gulp](https://github.com/gulpjs/gulp) 监听
 
 ### 1. gulp监听文件修改
 
@@ -89,7 +89,7 @@ table:
 ```javascript 
 const url = {
 	config: path.resolve(__dirname, './run.yml'),
-  output: [
+    output: [
     {
       tpl: path.resolve(__dirname, './View.ejs'),
       ext: '.jsx'
